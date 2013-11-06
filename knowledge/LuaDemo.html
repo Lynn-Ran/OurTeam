@@ -1,0 +1,199 @@
+<html>
+<head>
+  <title>Evernote Export</title>
+  <basefont face="Tahoma" size="2" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <meta name="exporter-version" content="Evernote Windows/269614 (zh-CN); Windows/6.1.7601 Service Pack 1;"/>
+  <style>
+    body, td {
+      font-family: Tahoma;
+      font-size: 10pt;
+    }
+  </style>
+</head>
+<body>
+<a name="3452"/>
+
+<div>
+<div style="word-wrap: break-word; -webkit-nbsp-mode: space; -webkit-line-break: after-white-space;"><font color="#41AD1C" face="Monaco" style="font-size: 21px;">A simple stand-alone Lua interpreter</font><div><font face="Monaco">#include &lt;stdio.h&gt;<br>
+#include &lt;string.h&gt;<br>
+#include &quot;lua.hpp&quot;</font><br><br><font face="Monaco">int main ( void ) {<br>
+     char buff[256];<br>
+     int error;<br><font color="#41AD1C">     lua_State *L = luaL_newstate();<br>
+     luaL_openlibs( L );</font><br><br>
+     while ( fgets( buff, sizeof( buff ), stdin ) != NULL ) {<br>
+          <font color="#41AD1C">error = luaL_loadstring( L, buff ) || lua_pcall( L, 0, 0, 0 );</font><br>
+          if ( error ) {<br>
+               fprintf( stderr, &quot;%s\n&quot;, lua_tostring( L, -1 ) );<br>
+               lua_pop( L, 1 );<br>
+          }<br>
+     }<br><br>
+     lua_close( L );<br>
+     return 0;<br>
+}</font></div><div><font face="Monaco"><br></font></div><div><br></div><div><br></div><div><font face="Monaco">note:添加Property-&gt;Configuration Properties-&gt;C/C++-&gt;Preprocessor-&gt;Preprocessor Definitions-&gt;</font><span style="font-family: Monaco;">_CRT_SECURE_NO_DEPRECATE</span></div><div><span style="font-family: Monaco;"><font color="#5898FF">luaL_newstate</font>创建一个新的状态机，错误的话则返回NULL。</span></div><div><span style="font-family: Monaco;"><font color="#5898FF">luaL_openlibs</font>打开全部的标准库。</span></div><div><span style="font-family: Monaco;"><font color="#5898FF">luaL_loadstring</font>将代码编译，不执行。如果没有错误的话，返回0并且把结果函数压入堆栈。调用<font color="#5898FF">lua_load</font>来完成的。</span></div><div><span style="text-align: justify;"><font color="#5898FF" face="Monaco">int lua_pcall ( lua_State *L, int nargs, int nresults, int msgh );</font></span></div><div><span style="font-family: Monaco;">弹栈并在保护模式下执行函数。如果没有错误，返回LUA_OK(0)。nargs是参数个数，nresults是返回值个数，存取都来自于栈。</span></div><div><font face="Monaco">如果出错了就返回 error code，并把错误信息压栈。</font></div><div><font color="#5898FF" face="Monaco">void lua_call ( lua_State *L, int nargs, int nresults );</font></div><div><font face="Monaco">调用一个函数。使用方法：</font></div><div><font face="Monaco">1. 将要调用的函数压栈；</font></div><div><font face="Monaco">2. 顺序压入参数（第一个参数先入栈，最后一个参数在栈顶）；</font></div><div><font face="Monaco">3. 调用lua_call，nargs是压入的参数个数，nresults是函数返回的结果的个数</font></div><div><font face="Monaco">4. 函数结果会被顺序地压入堆栈（</font><span style="font-family: Monaco;">第一个参数先入栈，最后一个参数在栈顶</span><span style="font-family: Monaco;">），处理函数结果（比如赋值），及得要保持堆栈平衡。</span></div><div><p style="text-align: justify;"><font face="Monaco">The following example shows how the host program can do the equivalent to this Lua code:</font></p><pre style="text-align: justify;"><font face="Monaco">     a = f(&quot;how&quot;, t.x, 14)
+</font></pre><p style="text-align: justify;"><font face="Monaco">Here it is in C:</font></p><pre style="text-align: justify;"><font face="Monaco">     lua_getglobal(L, &quot;f&quot;);                  /* function to be called */
+     lua_pushstring(L, &quot;how&quot;);                        /* 1st argument */
+     lua_getglobal(L, &quot;t&quot;);                    /* table to be indexed */
+     lua_getfield(L, -1, &quot;x&quot;);        /* push result of t.x (2nd arg) */
+     lua_remove(L, -2);                  /* remove 't' from the stack */
+     lua_pushinteger(L, 14);                          /* 3rd argument */
+     lua_call(L, 3, 1);     /* call 'f' with 3 arguments and 1 result */
+     lua_setglobal(L, &quot;a&quot;);                         /* set global 'a' */
+</font></pre><p style="text-align: justify;"><font face="Monaco">Note that the code above is &quot;balanced&quot;: at its end, the stack is back to its original configuration. This is considered good programming practice.</font></p></div><div><span style="font-family: Monaco;"><font color="#5898FF">luaL_loadstring</font>和<font color="#5898FF">lua_pcall</font>如果出错就把错误信息压栈，可以使用<font color="#5898FF">lua_tostring</font>获取，然后实用<font color="#5898FF">lua_pop</font>移除。</span></div><div><font color="#5898FF" face="Monaco">#define lua_tostring(L,i) lua_tolstring(L, (i), NULL)</font></div><div><font color="#5898FF" face="Monaco">const char *lua_tolstring (lua_State *L, int index, size_t *len);</font></div><div><font face="Monaco">将索引处的值转换成C字符串。如果len不为空，则带出字符串长度。堆栈中索引处的值必须是字符串或者数字，否则函数返回NULL。该字符串中间可以包含0.</font></div><div><span style="color: rgb(88, 152, 255); font-family: Monaco;">#define lua_pop(L,n) lua_settop(L, -(n)-1) </span><span style="font-family: Monaco;">从堆栈中弹出n个元素。</span></div><div><span style="font-family: Monaco;">程序退出之前要使用<font color="#5898FF">lua_close</font>关闭lua栈。</span></div><div><hr><br></div><div style="font-size: 21px;"><font color="#41AD1C" face="Monaco">Example of stack manipulation</font></div><div><font face="Monaco">#include &lt;stdio.h&gt;</font></div><div><font face="Monaco">#include &lt;stdlib.h&gt;<br>
+#include &lt;string.h&gt;<br>
+#include &quot;lua.hpp&quot;<br><br>
+static void stackDump ( lua_State *L ) {<br>
+     int top = lua_gettop( L );<br>
+     for ( int i = 1; i &lt;= top; ++i ) {<br>
+          int t = lua_type( L, i );<br>
+          switch ( t ) {<br>
+               case LUA_TSTRING : {<br>
+                    printf( &quot;'%s'&quot;, lua_tostring( L, i ) );<br>
+                    break;<br>
+               }<br>
+               case LUA_TBOOLEAN : {<br>
+                    printf( lua_toboolean( L ,i ) ? &quot;true&quot; : &quot;false&quot; );<br>
+                    break;<br>
+               }<br>
+               case LUA_TNUMBER : {<br>
+                    printf( &quot;%g&quot;, lua_tonumber( L, i ) );                      <br>
+                    break;<br>
+               }<br>
+               default : {<br>
+                    printf( &quot;%s&quot;, lua_typename( L, t ) );<br>
+                    break;<br>
+               }<br>
+          }<br>
+          printf( &quot;     &quot; );<br>
+     }<br>
+     printf( &quot;\n&quot; );<br>
+}<br><br>
+int main ( void ) {<br>
+     lua_State *L = luaL_newstate();<br><br>
+     lua_pushboolean( L, 1 );<br>
+     lua_pushnumber( L, 10 );<br>
+     lua_pushnil( L );<br>
+     lua_pushstring( L, &quot;hello&quot; );<br><br>
+     stackDump( L );<br><br>
+     lua_pushvalue( L, -4 );<br>
+     stackDump( L );<br><br>
+     lua_replace( L, 3 );<br>
+     stackDump( L );<br><br>
+     lua_settop( L, 6 );<br>
+     stackDump( L );<br><br>
+     lua_remove( L, -3 );<br>
+     stackDump( L );<br><br>
+     lua_settop( L, -5 );<br>
+     stackDump( L );<br><br>
+     lua_close( L );</font></div><div><font face="Monaco">     system( &quot;pause&quot; );<br>
+     return 0;<br>
+}</font></div><div><font face="Monaco"><br></font></div><div><br></div><div><font face="Monaco"><br></font></div><div><font face="Monaco">note:</font></div><div><font face="Monaco">压栈函数：</font></div><div><font color="#5898FF" face="Monaco">void lua_pushnil           ( lua_State *L );</font></div><div><font color="#5898FF" face="Monaco">void lua_pushboolean       ( lua_State *L, int bool );</font></div><div><font color="#5898FF" face="Monaco">void lua_pushnumber        ( lua_State *L, lua_Number n );</font></div><div><font color="#5898FF" face="Monaco">void lua_pushinteger       ( lua_State *L, lua_Integer n );</font></div><div><font color="#5898FF" face="Monaco">void lua_pushunsigned      ( lua_State *L, lua_Unsigned n );</font></div><div><font color="#5898FF" face="Monaco">void lua_pushlstring       ( lua_State *L, const char *s, size_t len );</font></div><div><font color="#5898FF" face="Monaco">void lua_pushstring        ( lua_State *L, const char *s );</font></div><div><font face="Monaco"><font color="#5898FF">lua_pushlstring</font>压入的字符串是指针+长度的任意字符串。<font color="#5898FF">lua_pushstring</font>压入0结尾字符串。</font></div><div><font face="Monaco">在压栈之前需要保证堆栈空间：</font></div><div><font color="#5898FF" face="Monaco">int lua_checkstack( lua_State *L, int sz );</font></div><div><font face="Monaco">保证堆栈上有至少sz个剩余槽。该函数永远不会缩小堆栈，如果堆栈够用就不改变，不够用就申请内存，出错了就返回false。</font></div><div><font face="Monaco">检查某个元素是否是某个类型，其判断依据是该元素能否转换成指定的类型：</font></div><div><font color="#5898FF" face="Monaco">int lua_is* ( lua_State *L, int index );</font></div><div><font face="Monaco">获取某元素的类型：<font color="#5898FF">lua_type</font></font></div><div><font face="Monaco">从栈获取值：</font></div><div><font color="#5898FF" face="Monaco">int                lua_toboolean      ( lua_State *L, int index );</font></div><div><font color="#5898FF" face="Monaco">const char      *  lua_tolstring      ( lua_State *L, int index, size_t *len );</font></div><div><font color="#5898FF" face="Monaco">lua_Number         lua_tonumber       ( lua_State *L, int index );</font></div><div><font color="#5898FF" face="Monaco">lua_Integer        lua_tointeger      ( lua_State *L, int index );</font></div><div><font color="#5898FF" face="Monaco">lua_Unsigned       lua_tounsigned     ( lua_State *L, int idx );</font></div><div><font face="Monaco">对于数字，下面是带检查的版本，isnum返回一个布尔变量：</font></div><div><font color="#5898FF" face="Monaco">lua_Number         lua_tonumberx      ( lua_State *L, int idx, int *isnum );</font></div><div><font color="#5898FF" face="Monaco">lua_Integer        lua_tointegerx     ( lua_State *L, int idx, int *isnum );</font></div><div><font color="#5898FF" face="Monaco">lua_Unsigned       lua_tounsignedx    ( lua_State *L, int idx, int *isnum );</font></div><div><font face="Monaco">其他堆栈操作：</font></div><div><font color="#5898FF" face="Monaco">int  lua_gettop      ( lua_State *L );</font></div><div><font face="Monaco">返回栈顶索引，即栈元素个数。</font></div><div><font color="#5898FF" face="Monaco">void lua_settop      ( lua_State *L, int index );</font></div><div><font face="Monaco">设置栈顶，扩大了就用nil填充，缩小了就抛弃超过新栈顶的元素。另有<font color="#5898FF">#define lua_pop(L,n) lua_settop(L, -(n)-1)</font></font></div><div><font color="#5898FF" face="Monaco">void lua_pushvalue   ( lua_State *L, int index );</font></div><div><font face="Monaco">从索引处复制一份元素压入栈顶。</font></div><div><font color="#5898FF" face="Monaco">void lua_remove      ( lua_State *L, int index );</font></div><div><font face="Monaco">删除索引指定的元素，上端元素下降。</font></div><div><font color="#5898FF" face="Monaco">void lua_insert      ( lua_State *L, int index );</font></div><div><font face="Monaco">将栈顶元素移动到索引指定出，上端元素上移。</font></div><div><font color="#5898FF" face="Monaco">void lua_replace     ( lua_State *L, int index );</font></div><div><font face="Monaco">弹出栈顶，用索引指定的元素给栈顶重新赋值。</font></div><div><font color="#5898FF" face="Monaco">void lua_copy        ( lua_State *L, int fromidx, int toidx );</font></div><div><font face="Monaco">复制一处元素到另一处</font></div><div><hr><br></div><div style="font-size: 21px;"><font color="#41AD1C" face="Monaco">C AND LUA</font></div><div><font face="Monaco">#include &lt;stdio.h&gt;<br>
+#include &lt;stdlib.h&gt;<br>
+#include &lt;string.h&gt;<br>
+#include &lt;stdarg.h&gt;<br>
+#include &quot;lua.hpp&quot;<br><br>
+#define LUA_FILE &quot;..\\..\\lua\\test.lua&quot;<br><br>
+void error ( lua_State *L, const char *fmt, ... ) {<br>
+     va_list argp;<br>
+     va_start( argp, fmt );<br>
+     vfprintf( stderr, fmt, argp );<br>
+     va_end( argp );<br>
+     lua_close( L );<br>
+     system( &quot;pause&quot; );<br>
+     exit( EXIT_FAILURE );<br>
+}<br><br>
+static int cfn ( lua_State *L ) {<br>
+     int i = luaL_checknumber( L, 1 );<br>
+     int j = luaL_checknumber( L, 2 );<br>
+     lua_pushnumber( L, i + j );<br>
+     lua_pushnumber( L, i - j );<br>
+     return 2;<br>
+}<br><br><font color="#41AD1C">static const struct luaL_Reg clib[] = {<br>
+     { &quot;secondfn&quot;, cfn },<br>
+     { NULL, NULL }<br>
+};<br><br>
+int luaopen_clib ( lua_State *L ) {<br>
+     luaL_newlib( L, clib );<br>
+     return 1;<br>
+}</font><br><br><br>
+int main ( void ) {<br>
+    <br>
+     lua_State *L = luaL_newstate();<br>
+     luaL_openlibs( L );<br><br>
+     // lua call c : regist c fn<br><font color="#41AD1C">     lua_pushcfunction( L, cfn );<br>
+     lua_setglobal( L, &quot;firstfn&quot; );</font></font></div><div><font face="Monaco"><font color="#41AD1C">     </font>// The two functions above could be replaced by the function below: </font></div><div><font face="Monaco">     // <font color="#41AD1C">lua_register( L, &quot;firstfn&quot;, cfn );</font><font color="#41AD1C"><br></font><br>
+     // lua call c : regist c fn<br><font color="#41AD1C">     luaL_requiref( L, &quot;clib&quot;, luaopen_clib, 1 );</font></font></div><div><font face="Monaco"><font color="#41AD1C"><b>     </b></font>lua_pop( L, 1 );<font color="#41AD1C"><b><br></b></font><br>
+     // load file<br>
+     if ( luaL_loadfile( L, LUA_FILE ) || lua_pcall( L, 0, 0, 0 ) ) {<br>
+          error( L, &quot;cannot run test.lua file: %s\n&quot;, lua_tostring( L, -1 ) );<br>
+     }<br><br>
+     // get global<br>
+ <font color="#41AD1C">    lua_getglobal( L, &quot;hello&quot; );</font><br>
+     if ( !lua_isnumber( L, -1 ) ) {<br>
+          error( L, &quot;'hello' should be a number\n&quot; );<br>
+     }<br>
+     printf( &quot;hello: %d\n&quot;, lua_tointeger( L, -1 ) );<br>
+     lua_pop( L, 1 );<br><br>
+     // get table<br>
+     lua_getglobal( L, &quot;t&quot; );<br>
+     if ( !lua_istable( L, -1 ) ) {<br>
+          error( L, &quot;'t' is not a table\n&quot; );<br>
+     }<br>
+     <font color="#41AD1C">lua_pushstring( L, &quot;hello&quot; );<br>
+     lua_gettable( L, -2 );</font><br>
+     // The two functions above could be replaced by the function below:<br>
+     // <font color="#41AD1C">lua_getfield( L, -1, key );</font><br>
+     printf( &quot;t.hello = %s\n&quot;, lua_tostring( L, -1 ) );<br>
+     lua_pop( L, 2 );<br><br>
+     // set table<br>
+     <font color="#41AD1C">lua_newtable( L );</font><br>
+     if ( !lua_istable( L, -1 ) ) {<br>
+          error( L, &quot;'t' is not a table\n&quot; );<br>
+     }<br>
+     lua_pushstring( L, &quot;lua&quot; );<br>
+     lua_pushstring( L, &quot;beautiful&quot; );<br>
+     <font color="#41AD1C">lua_settable( L, -3 );<br>
+     lua_setglobal( L, &quot;t2&quot; );</font><br>
+     // The three functions above could be replaced by the functions below:<br>
+     // lua_pushstring( L, &quot;beautiful&quot; );<br>
+     // <font color="#41AD1C">lua_setfield( L, -2, &quot;lua&quot; );</font><br>
+     lua_pop( L, 1 );<br>
+     lua_getglobal( L, &quot;test_t&quot; );<br>
+     if ( lua_pcall( L, 0, 0, 0 ) != LUA_OK ) {<br>
+          error( L, &quot;error running function 'test_t': %s\n&quot;, lua_tostring( L, -1 ) );<br>
+     }<br><br>
+     // c call lua<br>
+     lua_getglobal( L, &quot;luafn&quot; );<br>
+     lua_pushnumber( L, 798 );<br>
+     lua_pushnumber( L, 456 );<br>
+     if ( <font color="#41AD1C">lua_pcall( L, 2, 2, 0 )</font> != LUA_OK ) {<br>
+          error( L, &quot;error running function 'luafn': %s\n&quot;, lua_tostring( L, -1 ) );<br>
+     }<br>
+     int isnum = 1;<br>
+     double a, b;<br>
+     a = lua_tonumber( L, -1, &amp;isnum );<br>
+     if ( !isnum ) {<br>
+          error( L, &quot;functon 'luafn' must return two numbers\n&quot; );<br>
+     }<br>
+     b = lua_tonumber( L, -2, &amp;isnum );<br>
+     if ( !isnum ) {<br>
+          error( L, &quot;functon 'luafn' must return two numbers\n&quot; );<br>
+     }<br>
+     printf( &quot;luafn: result 1: %f     result 2: %f\n&quot;, a, b );<br>
+     lua_pop( L, 2 );<br><br>
+     lua_close( L );<br>
+     system( &quot;pause&quot; );<br>
+     return 0;<br>
+}</font></div><div><font face="Monaco"><br></font></div><div><font face="Monaco">--&gt; lua file：</font></div><div><font face="Monaco">print( &quot;firstfn:&quot; )<br>
+print( firstfn( 3, 2 ) )<br><br>
+print( &quot;secondfn:&quot; )<br>
+print( clib.secondfn( 10, 6 ) )<br><br>
+hello = 2013<br><br>
+function luafn( a, b )<br>
+     return a + b, a - b<br>
+end<br><br>
+t= { hello = &quot;world&quot; }<br><br>
+function test_t ()<br>
+     print( &quot;lua is &quot; .. t2.lua )<br>
+end</font><br></div><div><font face="Monaco"><br></font></div><div><font face="Monaco"><br></font></div><div><br></div><div><font face="Monaco"><br></font></div><div><font face="Monaco">note:</font></div><div><font face="Monaco"><font color="#5898FF">get_global</font>将全局值压入栈顶。</font></div><div><font face="Monaco"><font color="#5898FF">set_global</font>将栈顶元素弹出，并设置该元素到全局。</font></div><div><font color="#5898FF" face="Monaco">#define lua_pushcfunction(L,f) lua_pushcclosure(L, (f), 0)</font></div><div><font face="Monaco">将一个C函数压入栈顶，元素类型是function。C函数原型定义：</font></div><div><font color="#5898FF" face="Monaco">typedef int ( *lua_CFunction ) ( lua_State *L )</font></div><div><font color="#5898FF" face="Monaco">void lua_pushcclosure (lua_State *L, lua_CFunction fn, int n);</font></div><div><font face="Monaco">将一个新的C闭包压入栈顶，如果n是0，就创建一个轻量C函数。使用方法：</font></div><div><font face="Monaco">1. 将和C函数相关的变量顺序压入堆栈（第一个参数先压栈）；</font></div><div><font face="Monaco">2. 调用lua_pushcclosure，参数n是相关变量的个数；</font></div><div><font face="Monaco">3. 函数会将这些变量弹栈，然后把新的C闭包（C函数）压栈，记得保持堆栈平衡。</font></div><div><font color="#5898FF" face="Monaco">#define lua_register(L,n,f) (lua_pushcfunction(L, (f)), lua_setglobal(L, (n)))</font></div><div><font color="#5898FF" face="Monaco">void luaL_requiref (lua_State *L, const char *modname, lua_CFunction openf, int glb);</font></div><div><font face="Monaco">调用openf，将结果设置到package.loaded[modname]里，就像函数被<font color="#5898FF">require</font>调用过一样。</font></div><div><font face="Monaco">如果glb为真，就同时将结果设置到全局的modname上。</font></div><div><font face="Monaco"><font color="#5898FF">lua_gettable</font>获取t[k]的值。t是索引处的表，k是栈顶的key，该函数弹出栈顶的key并把结果压入栈顶。</font></div><div><font face="Monaco"><font color="#5898FF">lua_settable</font>赋值t[k]=v。t是索引出的表，v是栈顶的值，k是-2处的key，该函数弹出v和k 2个元素。</font></div><div><font face="Monaco"><font color="#5898FF">lua_getfield</font>获取t[k]的值并把结果压入栈顶。t是索引处的表。</font></div><div><font face="Monaco"><font color="#5898FF">lua_setfield</font>赋值t[k]=v并弹出v。t是索引出的表，v是栈顶的值。</font></div><div><font face="Monaco"><br></font></div><div><font face="Monaco"><br></font></div><div><font face="Monaco"><br></font></div><div><font face="Monaco"><br></font></div><div><font face="Monaco"><br></font></div><div><font face="Monaco"><br></font></div><div><font face="Monaco"><br></font></div><div><font face="Monaco"><br></font></div><div><font face="Monaco"><br></font></div></div>
+</div></body></html> 
