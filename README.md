@@ -44,13 +44,14 @@ Lua内私有化
 
 		此时在共有脚本2.lua内的可以使用plus.test.outer, 但不允许调用inner  
 
-4, lua GC 未完成	2013/11/22
+4, lua GC 未完成	2013/11/29
 
 		GC流程图  Mark Color
 		usedata(light&full)
 		weak table
    
-5, 本地工程私有化: 实现双State, 内部默认私有化  
+5, 本地工程私有化: 实现双State, 内部默认私有化
+	已确认代理嵌入模式, 进行实际嵌入, 并研究双State加载相关问题
 
 6, 本地工程私有化: 实现C++内向公有State代理  
 
