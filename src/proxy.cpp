@@ -22,20 +22,19 @@ namespace {
 
     int proxy_fn ( lua_State *L ) {
         int n = L->top - L->ci->func - 1;
-        int r = L->ci->nresults;
         lua_getglobal( Li, lua_tostring( L, lua_upvalueindex( 1 ) ) );
 
         lua_xmove( L, Li, n );
-        if ( lua_pcall( Li, n, r, 0 ) ) {
+        if ( lua_pcall( Li, n, PROXY_MAX_RETURN, 0 ) ) {
             if ( NULL != handler_fn ) {
                 handler_fn( lua_tostring( Li, -1 ) );
             }
             lua_pop( Li, -1 );
             return 0;
         }
-        lua_xmove( Li, L, r );
+        lua_xmove( Li, L, PROXY_MAX_RETURN );
 
-        return r;
+        return PROXY_MAX_RETURN;
     }
 
 } // end of anonymous namespace

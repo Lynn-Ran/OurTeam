@@ -29,6 +29,8 @@ int main () {
 
     AddProxy( "max", "getmax", "math" );
 
+	
+
     lua_getglobal( L2, "plugin" );
     lua_getfield( L2, -1, "math" );
     lua_getfield( L2, -1, "max" );
@@ -41,6 +43,10 @@ int main () {
         printf( "%d\n", lua_tointeger( L2, -1 ) );
         lua_pop( L2, -1 );
     }
+
+	
+
+	luaL_dostring( L2, "print( plugin.math.max( 10, 100 ) )" );
 
     lua_close( L1 );
     lua_close( L2 );
