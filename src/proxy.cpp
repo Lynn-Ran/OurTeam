@@ -21,7 +21,7 @@ namespace {
     int                             errcode;
 
     int proxy_fn ( lua_State *L ) {
-        int n = L->top - L->ci->func - 1;
+        int n = lua_gettop( L );
         lua_getglobal( Li, lua_tostring( L, lua_upvalueindex( 1 ) ) );
 
         lua_xmove( L, Li, n );

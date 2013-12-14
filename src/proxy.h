@@ -3,7 +3,6 @@
 
 /* TODO: modify corresponding includes please */
 #include "../example/src/lua.hpp"
-#include "../example/src/lstate.h"
 
 #define PROXY_MAX_RETURN 10
 
