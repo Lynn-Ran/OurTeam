@@ -30,7 +30,7 @@ namespace {
             if ( NULL != handler_fn ) {
                 handler_fn( lua_tostring( Li, -1 ) );
             }
-            lua_pop( Li, -1 );
+            lua_pop( Li, 1 );
             return 0;
         }
         r = lua_gettop( Li );
