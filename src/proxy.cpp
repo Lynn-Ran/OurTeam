@@ -22,8 +22,7 @@ namespace {
 
     int proxy_fn ( lua_State *L ) {
         int n = lua_gettop( L );
-        int r = L->ci->nresults;
-        int t = lua_gettop( Li );
+        int r = LUA_MULTRET;
         lua_getglobal( Li, lua_tostring( L, lua_upvalueindex( 1 ) ) );
 
         lua_xmove( L, Li, n );
@@ -34,7 +33,7 @@ namespace {
             lua_pop( Li, -1 );
             return 0;
         }
-        if ( LUA_MULTRET == r ) { r = lua_gettop( Li ) - t; }
+        r = lua_gettop( Li );
         lua_xmove( Li, L, r );
 
         return r;
@@ -61,6 +60,8 @@ namespace lua_proxy {
 
         lua_newtable( Lo );
         lua_setglobal( Lo, proxy_module );
+
+		return true;
     }
 
 
